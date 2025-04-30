@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./TodoApp.css";
+import { FaEdit, FaTrashAlt, FaCheckCircle, FaCircle } from "react-icons/fa"; // Added icons
 
 type Todo = {
   id: number;
@@ -10,8 +11,6 @@ type Todo = {
 
 const STORAGE_KEY = "todosData";
 
-const getTodayDate = () => new Date().toISOString().split("T")[0];
-
 const TodoApp: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [input, setInput] = useState("");
@@ -21,63 +20,35 @@ const TodoApp: React.FC = () => {
   const [editId, setEditId] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
 
-  // Load todos from localStorage if the date matches today
+  // Load from localStorage (fixed to persist across page refresh)
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    const today = getTodayDate();
 
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        const storedDate = parsed.date;
-
-        if (storedDate === today) {
-          setTodos(parsed.todos);
-        } else {
-          // Reset only the todos, but keep today's date
-          localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({ date: today, todos: [] })
-          );
-          setTodos([]);
-        }
+        const storedTodos = Array.isArray(parsed.todos) ? parsed.todos : [];
+        setTodos(storedTodos); // Set todos only if they exist
       } catch (error) {
         console.error("Failed to parse localStorage data:", error);
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STORAGE_KEY); // Remove the invalid localStorage item
+        setTodos([]); // Set todos to empty array in case of error
       }
     }
-  }, []);
+  }, []); // Only run once on initial load
 
-  // Save to localStorage when todos change
+  // Save to localStorage whenever todos change
   useEffect(() => {
-    const today = getTodayDate();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, todos }));
+    if (todos.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ todos })); // Store updated todos
+    }
   }, [todos]);
-
-  // Optional: Clear todos at midnight automatically
-  useEffect(() => {
-    const now = new Date();
-    const millisTillMidnight =
-      new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() -
-      now.getTime();
-
-    const timer = setTimeout(() => {
-      const today = getTodayDate();
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ date: today, todos: [] })
-      );
-      setTodos([]);
-    }, millisTillMidnight);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleAdd = () => {
     if (input.trim() === "") return;
     const newTodo: Todo = {
       id: Date.now(),
-      text: input,
+      text: input.trim(),
       completed: false,
       date: new Date().toLocaleString(),
     };
@@ -162,13 +133,17 @@ const TodoApp: React.FC = () => {
             </div>
             <div className="todo-actions">
               {editId === todo.id ? (
-                <button onClick={() => handleSave(todo.id)}>Save</button>
+                <button onClick={() => handleSave(todo.id)}>
+                  <FaCheckCircle />
+                </button>
               ) : (
                 <button onClick={() => handleEdit(todo.id, todo.text)}>
-                  Edit
+                  <FaEdit />
                 </button>
               )}
-              <button onClick={() => handleDelete(todo.id)}>Delete</button>
+              <button onClick={() => handleDelete(todo.id)}>
+                <FaTrashAlt />
+              </button>
             </div>
           </div>
         ))}
