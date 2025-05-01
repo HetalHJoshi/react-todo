@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./TodoApp.css";
-import { FaEdit, FaTrashAlt, FaCheckCircle, FaCircle } from "react-icons/fa"; // Added icons
+import { FaEdit, FaTrashAlt, FaCheckCircle } from "react-icons/fa"; // Added icons
 
 type Todo = {
   id: number;
@@ -73,9 +73,21 @@ const TodoApp: React.FC = () => {
     setEditText(text);
   };
 
+  // const handleSave = (id: number) => {
+  //   setTodos(
+  //     todos.map((todo) => (todo.id === id ? { ...todo, text: editText } : todo))
+  //   );
+  //   setEditId(null);
+  //   setEditText("");
+  // };
   const handleSave = (id: number) => {
+    const trimmedText = editText.trim();
+    if (trimmedText === "") return; // Don't save empty text
+
     setTodos(
-      todos.map((todo) => (todo.id === id ? { ...todo, text: editText } : todo))
+      todos.map((todo) =>
+        todo.id === id ? { ...todo, text: trimmedText } : todo
+      )
     );
     setEditId(null);
     setEditText("");
@@ -133,7 +145,10 @@ const TodoApp: React.FC = () => {
             </div>
             <div className="todo-actions">
               {editId === todo.id ? (
-                <button onClick={() => handleSave(todo.id)}>
+                <button
+                  onClick={() => handleSave(todo.id)}
+                  disabled={editText.trim() === ""}
+                >
                   <FaCheckCircle />
                 </button>
               ) : (
@@ -141,6 +156,7 @@ const TodoApp: React.FC = () => {
                   <FaEdit />
                 </button>
               )}
+
               <button onClick={() => handleDelete(todo.id)}>
                 <FaTrashAlt />
               </button>
